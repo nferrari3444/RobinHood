@@ -10,6 +10,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 import robin_stocks
 import pandas as pd 
 import time
+import datetime
+
 
 r = robin_stocks
 r.login("jancsikeresztes@gmail.com","BotTrading2019")
@@ -25,8 +27,11 @@ gc = gspread.authorize(credentials)
 
 #Worksheet
 wks = gc.open('RHData')
+
+# holdings is the object which get the tab Positions form the RHData google sheet
 holdings = wks.worksheet('Positions')
 
+# optionHoldings get the Options tab from the RHData google sheet
 optionHoldings = wks.worksheet('Options')
 # Code to create the column headers in the google sheet Positiions
 columns = ['Symbol','Amount','BuyPrice','BuyDate','AskSize','BidSize','LastTradePrice',
@@ -41,13 +46,15 @@ class PortfolioData():
         extract relevant information of each position. 
         
         For each symbol in the portfolio, the function returns a row in 
-        the Position worksheet with information such as Symbol, Buy Price, 
+        the Positions worksheet with information such as Symbol, Buy Price, 
         Quantity, Ask and Bid size, Last Trade Price, Initial Holding and 
         Current Holding and Profit Loss.
 
         '''
         positions = r.get_current_positions()
 
+        CurrentDate = str(datetime.datetime.now().date())
+        
         totalProfitLoss = 0
         for pos in positions:
             buyPrice = pd.to_numeric(pos['average_buy_price'])
@@ -74,11 +81,10 @@ class PortfolioData():
             
            
             info = [symbol,quantity,buyPrice, date, ask_size, bid_size, lasttradeprice,
-                    initialPosition, currentPosition, profitLoss, totalProfitLoss]
+                    initialPosition, currentPosition, profitLoss, totalProfitLoss,CurrentDate]
             print(info)
-           
-    
             index = 2
+            
             holdings.insert_row(info,index)
             time.sleep(1)
     
@@ -137,9 +143,10 @@ class PortfolioData():
         
         Returns a dataframe with the options positions
         '''
-        
         options = r.get_open_option_positions()
-
+        
+        CurrentDate = str(datetime.datetime.now().date())
+        
         for item in options:
             symbol = item['chain_symbol']
             positionType = item['type']
@@ -173,9 +180,8 @@ class PortfolioData():
             impliedVolatility = marketData['implied_volatility']
             
             info = [dates,symbol,optionType,positionType,expiry,strike,underlying,buyPrice,askPrice,bidPrice,BreakEvenPrice,
-                    lastTradePrice,askSize,bidSize,delta,gamma,theta,vega,open_interest,impliedVolatility]
-        
-            
+                    lastTradePrice,askSize,bidSize,delta,gamma,theta,vega,open_interest,impliedVolatility,CurrentDate]
+                    
             index = 3
             optionHoldings.insert_row(info,index)
             
@@ -184,9 +190,7 @@ class PortfolioData():
 
 if __name__ == "__main__":
     
-    
     inst = PortfolioData()
-    
     
     options = inst.get_options_data()
     pos = inst.get_positions()

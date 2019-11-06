@@ -46,13 +46,14 @@ class Strategy():
     
     def __init__(self):
         
-        self.index = 5    
+        self.index = 3    
+        
  
     def get_data(self,symbol,timeSpan):
         '''
         Parameters:
             symbol : string with the ticker symbol of a certain stock
-        timeSpan: string with the timeframe of the historical data. The possibilities
+        timeSpan: string with the timeframe of the historical data. The alternatives
         are: day(5 minutes timeframe), week(10 minutes timeframe), year(daily timeframe)
     
         '''
@@ -82,14 +83,13 @@ class Strategy():
         '''
         This function takes historical information of the last highs and lows prices of a symbol
         and build a matrix with the highs and lows arrays. Afterwards, it send the stock symbol 
-       that meet the Inside Day Bars or Double Inside Day Bars setup to a google sheet(RHData).
-        
-        
+        that meet the Inside Day Bars or Double Inside Day Bars setup to a google sheet(RHData).
         
         Paramters:
             prices dataframe with OHLCV data for each stock
             symbol: str ticker symbol of the stock
-            HLperiods: int of how many previous periods should calcualte highs and lows
+            HLperiods: int of how many previous periods should calcualte highs
+            and lows
             window: int to calculate the moving average indicator
         Returns:
             highest point  3 days before, 2 day before, 1 day before 
@@ -120,6 +120,7 @@ class Strategy():
         oneDayHigh = highLowMatrix[0,0]
         oneDayLow = highLowMatrix[0,1]
     
+    
         # Compute the moving Average Indicator with pandas on daily data
         # First reverse the prices dataframe by date, to have oldest dates at first
         # so we can keep coherence on the calculations.
@@ -131,10 +132,21 @@ class Strategy():
         SMA_50 = round(closes.rolling(window=window_SMA50).mean().iloc[-1],3)
         SMA_100 = round(closes.rolling(window=window_SMA100).mean().iloc[-1],3)
         
-    
+        trend = ''
+        if (SMA_10 > SMA_50) and (SMA_50 > SMA_100):
+            trend = 'UPTREND'
+        
+        elif (SMA_10 < SMA_50) and (SMA_50 < SMA_100):
+            trend = 'DOWNTREND'
+        
+        else:
+            trend ='UNDEFINED'
+            
+            
         # Compute the Savitzky-Golay filter on daily data
         smoothed_2dg = savgol_filter(closes, window_length = 11, polyorder = 1)
-
+        
+        date = str(datetime.datetime.now().date())
     
         print('{}Symbol{} {}'.format(BROWN,B,symbol))
         
@@ -148,18 +160,21 @@ class Strategy():
             
             self.index +=1
             
-            wks.update_cell(self.index,2,symbol)
-            wks.update_cell(self.index,3,threeDayHigh)
-            wks.update_cell(self.index,4,twoDayHigh)
-            wks.update_cell(self.index,6,threeDayLow)
+            wks.update_cell(self.index,1,symbol)
+            wks.update_cell(self.index,2,threeDayHigh)
+            wks.update_cell(self.index,3,twoDayHigh)
+            wks.update_cell(self.index,5,threeDayLow)
             
-            wks.update_cell(self.index,7,twoDayLow)
-            wks.update_cell(self.index,5,oneDayHigh)
-            wks.update_cell(self.index,8,oneDayLow)
+            wks.update_cell(self.index,11,date)
+            wks.update_cell(self.index,12,trend)
             
-            wks.update_cell(self.index,9,SMA_10)
-            wks.update_cell(self.index,10,SMA_50)
-            wks.update_cell(self.index,11,SMA_100)
+            wks.update_cell(self.index,6,twoDayLow)
+            wks.update_cell(self.index,4,oneDayHigh)
+            wks.update_cell(self.index,7,oneDayLow)
+            
+            wks.update_cell(self.index,8,SMA_10)
+            wks.update_cell(self.index,9,SMA_50)
+            wks.update_cell(self.index,10,SMA_100)
             
           
    
@@ -167,25 +182,26 @@ class Strategy():
  
             twoDayRange = round(twoDayHigh - twoDayLow,2)
             oneDayRange = round(oneDayHigh - oneDayLow,2)
-            #twoDayindex = 7
-            #oneDayindex = 8
+        
             twoDays = str((datetime.datetime.now() - BDay(2)).date())
             oneDay  = str((datetime.datetime.now() - BDay(1)).date())
             
-            twoDaysBars = [twoDays,symbol,twoDayHigh,twoDayLow]
-            yesterdayBars = [oneDay,symbol,oneDayHigh,oneDayLow ]
-            
             self.index +=1
             
-            wks.update_cell(self.index,2,symbol)
-            wks.update_cell(self.index,4,twoDayHigh)
-            wks.update_cell(self.index,7,twoDayLow)
-            wks.update_cell(self.index,5,oneDayHigh)
-            wks.update_cell(self.index,8,oneDayLow)
+            wks.update_cell(self.index,1,symbol)
+            wks.update_cell(self.index,3,twoDayHigh)
+            wks.update_cell(self.index,6,twoDayLow)
+            wks.update_cell(self.index,4,oneDayHigh)
+            wks.update_cell(self.index,7,oneDayLow)
             
-            wks.update_cell(self.index,9,SMA_10)
-            wks.update_cell(self.index,10,SMA_50)
-            wks.update_cell(self.index,11,SMA_100)
+            wks.update_cell(self.index,8,SMA_10)
+            wks.update_cell(self.index,9,SMA_50)
+            wks.update_cell(self.index,10,SMA_100)
+            
+            wks.update_cell(self.index,11,date)
+            wks.update_cell(self.index,12,trend)
+            
+            
             
             print('------------------------------------------------------------------')
             print('{}Symbol {} has Inside Day Bars'.format(B,symbol))
@@ -201,6 +217,8 @@ if __name__ == '__main__':
     ########################################
     # Daily setup 
     init = Strategy()
+    # symbols is a list that contains all ticker symbols. It is imorted from Utils
+    
     for symbol in symbols:
         try:
             data = init.get_data(symbol,'year')
@@ -211,23 +229,6 @@ if __name__ == '__main__':
 
     
     ###########################################
-    
-    # Set up xxx at market Open
-   # currentYear = datetime.datetime.now().year
-   # currentMonth = datetime.datetime.now().month
-   # currentDay = datetime.datetime.now().day
-   # hour = 9
-   ## minutes = 30
-    #currentTime = datetime.datetime.now()
-   # marketOpen = datetime.datetime(currentYear,currentMonth,currentDay,hour,minutes)
-
-   # secondsFromMarketOpen = currentTime - marketOpen
-   # minutesFromMarketOpen = int(np.floor((secondsFromMarketOpen.seconds) / 60))
-    
-   # minutes = minutesFromMarketOpen
-   # 
-   # symbols = ['CSCO','FB','MSFT','AAPL','TWTR', 'SBUX']
-   # minutes = 5
   
     
     
@@ -238,12 +239,14 @@ if __name__ == '__main__':
     
 # Code to create the column headers in the google sheet Positiions
 #columns = ['Symbol','ThreeDayHigh','TwoDayHigh','YesterdayHigh','ThreeDayLow',
-#           'TwoDayLow','YesterdayLow','SMA10','SMA50','SMA100']
+ #          'TwoDayLow','YesterdayLow','SMA10','SMA50','SMA100','Date','Trend']
 
 #dir(holdings)
-#cell_list = wks.range('B4:K4')
+
+#cell_list = wks.range('A2:L2')
 #cell_list
-#for i  in range(0,len(cell_list)):
+
+#for i in range(0,len(cell_list)):
 #   cell_list[i].value = columns[i]
     
 #cell_list

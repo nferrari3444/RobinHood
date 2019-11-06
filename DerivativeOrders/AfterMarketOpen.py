@@ -15,7 +15,7 @@ import time
 from datetime import timedelta
 
 r = robin_stocks
-r.login("jancsikeresztes@gmail.com","BotTrading2019")
+#r.login("jancsikeresztes@gmail.com","BotTrading2019")
 
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 
@@ -25,6 +25,8 @@ gc = gspread.authorize(credentials)
 #Worksheet
 wks = gc.open('RHData')
 
+
+# The orders object get the tab Trades on the RHData google sheet
 orders = wks.worksheet('Trades')
 
 api_key = 'RQKFECZIU89JZK5T'
@@ -46,10 +48,11 @@ class Trades():
         
         Parameters:
             symbol: string with the ticker symbol
-            minutes: int, minutes after market open to store prices. The highest frequency 
-            in RobinHood API for getting prices is 5 minutes. This means that prices comes in
-            5 minutes interval such as 9:30, 9:35, 9:40, 9:45, 9:50, etc. For this reason we 
-            use the Alpha Vantage API which provide data in one minute frequency
+            minutes: integer that refer to the minutes after market open to store prices.
+            The highest frequency in RobinHood API for getting prices is 5 minutes.
+            This means that prices comes in 5 minutes interval such as 9:30, 9:35,
+            9:40, 9:45, 9:50, etc. For this reason we use the Alpha Vantage API
+            which provide data in one minute frequency
         
         Returns:
             closePrices: list with the first values of the stock price after the amount of 
@@ -57,6 +60,7 @@ class Trades():
         '''
         
         # This API returns 100 values for the last prices on minute level
+        
         url = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={}&interval=1min&apikey={}'.format(symbol,api_key)
         data = requests.get(url)
 
@@ -95,11 +99,15 @@ class Trades():
         This function trigger orders based on the prices after market open. At first it 
         calculates the derivative/gradients of the prices and if the slope is positive
         trigger a market order to buy.
+        Parameters:
+            prices: list of prices after marke open. This inptut is the output 
+            from the marketOpen function
     
         '''
 
         minuteValues = np.array(prices)
-        print('First Minute prices of Symbol {} are {}'.format(minuteValues,symbol))
+        print('-------------------------------------------------------------------')
+        print('First Minute prices of Symbol {} are {}'.format(symbol,minuteValues))
         slope = np.gradient(minuteValues) 
         print('Gradients of Symbol {} is {}'.format(symbol,slope))
         slopeSign = np.sum(np.sign(slope))
@@ -113,9 +121,11 @@ class Trades():
             print('Positive Slope for symbol {} after {} minute from market Open'.format(symbol,minutes))
             print('Derivative is {}'.format(slopeSign))
            
-            # The next line trigger a market order to buy the symbol specified with a quantity of 1.
-            # I comment the line with # to test the script without triggering orders
-            #buyOrder = r.order_buy_market(symbol,1)
+            # The next line trigger a market order to buy the symbol specified with
+            # a quantity of 1. I comment the line with # to test the script without
+            # triggering orders 
+            
+            # buyOrder = r.order_buy_market(symbol,1)
                 
             # Retrieve information from the buyOrder object
 #            price = round(float(buyOrder['price']),3)
@@ -149,12 +159,21 @@ if __name__ == '__main__':
     
     symbols = ['SYY','DOCU',"ABBV" ,"MDLZ" ,"ZEN" ,"SO" ,"OKTA" ,"GIS", "WELL", "OMC"]
     
+    # This script use minute data from alpha Vantage API. Should be run after market
+    # open. Otherwise it will not have data to calculate derivates after market
+    # order and to send orders.
+    
     index = 2
     minutes = 5
     for symbol in symbols:
         trades = Trades()
-        prices = trades.marketOpen(symbol,minutes)
+        try:
+            prices = trades.marketOpen(symbol,minutes)
         
+        except Exception as e:
+            print(e)   
+            print('Cannot get data for  {}'.format(symbol))
+            
         trades.Orders(prices)
         time.sleep(5)  
         #    if currentTime >= marketOpen:
