@@ -194,7 +194,7 @@ def contracts_by_expiration(symbols,expiration):
                 IV = float(contract['implied_volatility'])
                 ImpVol[symbol] += float(contract['implied_volatility'])
             else:
-                IV = ''
+                IV = 0
                
             volume = contract['volume']
         
@@ -301,23 +301,18 @@ if __name__ == '__main__':
         ImpliedVolatility.append({str(date):ImpVol})
         
     allchains = pd.concat(master_ChainList)
-        
+    
+
+    allchains['delta'] = allchains['delta'].astype(float)    
     # Filter all contracts on the dataframe with delta higher than 0.2
     allchains = allchains[allchains['delta'] <= 0.2]
+    
+    
     
     allchains.sort_values('ImpliedVolatility',inplace=True,ascending=False)
     
     gd.set_with_dataframe(optionScreener, allchains)
         
-        
-        #ws = gc.open("RHData").worksheet("OptionsScreener")
-        #existing = gd.get_as_dataframe(ws)
-        #chain = contracts_by_expiration('GLD',dates[i])
-            
-        #updated = existing.append(chain)
-        #gd.set_with_dataframe(ws, updated)
-
-     
 columns = ['Contract','AdjPrice','askPrice','bidPrice','askSize','bidSize','prevClose',
            'lastTradePrice','IV','delta','DeltaFormula','volume','currentDate']
 
