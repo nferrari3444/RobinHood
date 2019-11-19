@@ -11,10 +11,10 @@ import robin_stocks
 import pandas as pd 
 import time
 import datetime
-
+from credentials import user, password
 
 r = robin_stocks
-r.login("jancsikeresztes@gmail.com","BotTrading2019")
+r.login(user,password)
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)

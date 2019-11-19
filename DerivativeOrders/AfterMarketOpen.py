@@ -13,9 +13,10 @@ from oauth2client.service_account import ServiceAccountCredentials
 import numpy as np
 import time   
 from datetime import timedelta
+from credentials import user, password
 
 r = robin_stocks
-#r.login("jancsikeresztes@gmail.com","BotTrading2019")
+#r.login(user,password)
 
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 

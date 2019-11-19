@@ -4,45 +4,7 @@ Created on Sun Oct  6 17:42:51 2019
 
 @author: Nicolas
 """
-import datetime
-import robin_stocks
 
-r = robin_stocks
-r.login("jancsikeresztes@gmail.com","BotTrading2019")
-
-
-##### Function to calculate derivative sign at tt minutes after market open
-
-class SymbolDerivative():
-    
-    def __init__(self,minutes,symbol):
-        
-        self.minutes = minutes
-        self.symbol = symbol
-        self.warmUpPrices = []
-        self.marketOpen = None
-        
-    def derivative(self):
-        if self.marketOpen == True:
-            for minute in self.minutes:
-                price = r.get_latest_price(self.symbol)
-                self.warmUpPrices.append(price)
-
-
-    def markeOpen(self,):
-    
-        time = datetime.datetime.now()
-        if time.hour == 9 and time.minute == 30:
-            self.marketOpen = True
-            
-        return self.markeOpen
-    
-    
-if __name__ == '__main__':
-    der = SymbolDerivative()
-    
-    time = datetime.datetime.now()
-    
 
 
 symbols = ["TSLA", "BABA", "EAT", "TWTR", "TTNP", "SBUX", "BAC", "DIS", "STM", "ACB", "GREK", "MSFT",

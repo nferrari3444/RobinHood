@@ -15,10 +15,10 @@ import datetime
 from collections import defaultdict
 import time 
 from datetime import timedelta
-
+from credentials import user, password
 
 r = robin_stocks
-r.login("jancsikeresztes@gmail.com","BotTrading2019")
+r.login(user,password)
 
 
 class TrailingOrders():
